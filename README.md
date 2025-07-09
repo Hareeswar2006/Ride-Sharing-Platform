@@ -87,9 +87,6 @@ Ride/
 - **View History:** Track your past rides and requests.
 - **Edit Profile:** Update your personal information and profile picture.
 
-## Screenshots
-> Add screenshots of the dashboard, ride matching, and profile pages here for better visualization.
-
 ## Contributing
 Contributions are welcome! Please open issues or submit pull requests for improvements or bug fixes.
 
