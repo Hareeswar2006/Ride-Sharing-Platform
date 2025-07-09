@@ -1,0 +1,46 @@
+
+<%- include("./partials/header.ejs") %>
+
+    <!-- SignUp Container -->
+    <div class="signup-container">
+        <!-- Floating background elements -->
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        
+        <div class="signup-box">
+            <div class="signup-logo">
+                <div class="signup-logo-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h1>RIDE</h1>
+            </div>  
+            <form action="/signup" method="post" autocomplete="off" class="signup-form">
+                <div class="signup-input-group">
+                    <label>Email*</label>
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" name="email" placeholder="Enter your email" required>
+                    <span class="email-error" style="color: red; display: none;"></span>
+                </div>
+                <div class="signup-input-group">
+                    <label>Password*</label>
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" placeholder="Enter your password" required>
+                    <span class="password-error" style="color: red; display: none;"></span>
+                </div>
+                <div class="signup-input-group">
+                    <label>Re-enter Password*</label>
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="reEnterPassword" placeholder="Re-enter your password" required>
+                    <span class="re-enter-password-error" style="color: red; display: none;"></span>
+                </div>
+                <button type="submit" class="signup-btn">Create Your Account</button>
+            </form>
+            <p class="signup-p"> Already Have an account? <a href="/login">Login</a></p>
+        </div>
+    </div>
+
+
+<%- include("./partials/footer.ejs") %>
+

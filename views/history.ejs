@@ -1,0 +1,160 @@
+<%- include("./partials/dashboard-header.ejs", { username: currentUser }) %>
+<link rel="stylesheet" href="/css/history.css">
+<div class="tabs">
+  <div class="tab active" data-tab="offers" id="offerTab"><i class="fas fa-road"></i> Offers</div>
+  <div class="tab" id="requestTab" data-tab="requests"><i class="fas fa-handshake"></i> Requests</div>
+</div>
+
+<div class="history-container">
+  <div class="sections">
+
+    <!-- ====== OFFERS SECTION ====== -->
+    <div class="offer-section section history" id="offers">
+      <div class="section-title">Offers</div>
+      
+      <% if (confirmedOffersAsOfferer.length <= 0) { %>
+        <div class="child">You have not offered any ride yet!.</div>
+      <% } %>
+
+      <% confirmedOffersAsOfferer.forEach(offer => { %>
+        <div class="offer-card">
+          <div class="history-card-header"><%= offer.offerer_name %> offered a ride</div>
+          <div><span class="label">From:</span> <%= offer.from_location %></div>
+          <div><span class="label">To:</span> <%= offer.to_location %></div>
+          <div><span class="label">Date:</span> <%= new Date(offer.ride_date).toDateString() %></div>
+
+          <div class="child-details">
+            <% if (
+              offer.requester_names &&
+              offer.requester_from_locations &&
+              offer.requester_to_locations &&
+              offer.requester_names.length === offer.requester_from_locations.length &&
+              offer.requester_from_locations.length === offer.requester_to_locations.length
+            ) { %>
+              <% for (let i = 0; i < offer.requester_names.length; i++) { 
+                   const status = offer.requester_statuses && offer.requester_statuses[i] ? offer.requester_statuses[i] : 'pending';
+              %>
+                <div class="child">
+                  <span class="label">Requester:</span> 
+                  <%= offer.requester_names[i] %> — 
+                  <%= offer.requester_from_locations[i] %> ➝ 
+                  <%= offer.requester_to_locations[i] %> 
+                  | <span class="status-label <%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></span>
+                </div>
+              <% } %>
+            <% } else { %>
+              <div class="error-message">⚠️ Requester data unavailable or inconsistent</div>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- ====== REQUESTS SECTION ====== -->
+    <div class="request-section section history" id="requests">
+      <div class="section-title">Requests</div>
+
+      <% confirmedOffersAsRequester.forEach(request => { 
+        if (request.requester_names && request.requester_names.length > 0) {
+          let myIndex = -1;
+          
+          for (let i = 0; i < request.requester_names.length; i++) {
+            if (request.requester_names[i] === currentUser) {
+              myIndex = i;
+              break;
+            }
+          }
+
+          if (myIndex !== -1) { 
+            const status = request.requester_statuses && request.requester_statuses[myIndex] ? request.requester_statuses[myIndex] : 'pending';
+      %>
+            <div class="request-card">
+              <div class="history-card-header">Requested <%= request.offerer_name %>'s ride</div>
+              <div><span class="label">Offerer From:</span> <%= request.from_location %></div>
+              <div><span class="label">Offerer To:</span> <%= request.to_location %></div>
+              <div><span class="label">Ride Date:</span> <%= new Date(request.ride_date).toDateString() %></div>
+
+              <div class="child-details">
+                <div class="child">
+                  <span class="label">Your Request:</span> 
+                  <%= request.requester_from_locations[myIndex] %> ➝ <%= request.requester_to_locations[myIndex] %>
+                </div>
+                <div class="child">
+                  <span class="label">Status:</span> 
+                  <span class="status-label <%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></span>
+                </div>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="child-details">
+              <div class="child">Your request is not found in this offer</div>
+            </div>
+          <% } %>
+        <% } else { %>
+          <div class="child-details">
+            <div class="child">No request data found</div>
+          </div>
+        <% } %>
+      <% }); %>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const sections = document.querySelectorAll('.section');
+    
+    // Activate first tab by default
+    if (tabs.length > 0 && sections.length > 0) {
+      tabs[0].classList.add('active');
+      sections[0].classList.add('active');
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and sections
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        tab.classList.add('active');
+        
+        // Show corresponding section
+        const targetId = tab.getAttribute('data-tab');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+  });
+</script>
+
+<style>
+  .offer-card:hover::after,
+  .request-card:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at var(--mouse-x) var(--mouse-y),
+      rgba(108, 92, 231, 0.1) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .status-label {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    text-transform: capitalize;
+  }
+  .status-label.accepted { background-color: #28a745; color: white; }
+  .status-label.pending { background-color: #ffc107; color: black; }
+  .status-label.rejected { background-color: #dc3545; color: white; }
+</style>
+
+<%- include("./partials/dashboard-footer.ejs") %>

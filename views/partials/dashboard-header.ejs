@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideShare Pro | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&libraries=places&callback=initAutocomplete" async defer></script>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-car"></i>
+                    <span>RideShare</span>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item <%= activePage === 'home' ? 'active' : '' %>">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/history" class="nav-item <%= activePage === 'history' ? 'active' : '' %>">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Saved Locations</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar">
+                        <% if (username) { 
+                            const words = username.split(/\s+/).filter(Boolean);
+                            if (words.length === 1) { %>
+                                <%= words[0][0].toUpperCase() %>
+                            <% } else { %>
+                                <%= words.map(w => w[0][0].toUpperCase()).join('') %>
+                            <% } 
+                        } %>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.1rem; font-weight: bold;"><%= username %></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="topbar">
+                <div class="hamburger" id="hamburger">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="topbar-title">Plan Your Journey</div>
+                <div class="topbar-controls">
+                    <div class="notification-icon" id="notif-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notif-count"></span>
+                    </div>
+                    <div class="notification-dropdown" id="notif-dropdown">
+                        <div class="notification-header">Notifications</div>
+                        <div class="notification-list" id="notif-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const socket = io();
+    const currentUsername = "<%= username %>";
+    const notifIcon = document.getElementById("notif-icon");
+    const notifCountElem = document.getElementById("notif-count");
+    const notifDropdown = document.getElementById("notif-dropdown");
+    const notifList = document.getElementById("notif-list");
+
+    let notifCount = 0;
+
+    socket.emit("register", currentUsername);
+
+    // Fetch unseen notifications count
+    fetch(`/notifications/unseen-count?username=${currentUsername}`)
+        .then(res => res.json())
+        .then(data => {
+            notifCount = data.count;
+            if (notifCount > 0) {
+                notifCountElem.textContent = " ";
+                notifCountElem.style.display = "inline-block";
+            }
+        })
+        .catch(err => console.error("Error fetching unseen count:", err));
+
+    // Toggle dropdown + fetch notifications + mark as read
+    notifIcon.addEventListener("click", () => {
+        notifDropdown.classList.toggle("active");
+
+        if (notifDropdown.classList.contains("active")) {
+            fetch(`/notifications/unseen?username=${currentUsername}`)
+                .then(res => res.json())
+                .then(data => {
+                    notifList.innerHTML = "";
+                    let hasUnread = false;
+
+                    data.notifications.forEach(notif => {
+                        const item = document.createElement("div");
+                        item.classList.add("notification-item");
+
+                        if (notif.requester_name === currentUsername) {
+                            item.innerHTML = `
+                                <strong>${notif.offerer_name}</strong> ${notif.offerer_response || 'did not respond'} to your request<br>
+                                ${notif.requester_from} ➜ ${notif.requester_to}<br>
+                                <small>${notif.ride_date}</small>
+                            `;
+                        } else if (notif.offerer_name === currentUsername) {
+                            item.innerHTML = `
+                                <strong>${notif.requester_name}</strong> requested a ride<br>
+                                ${notif.requester_from} ➜ ${notif.requester_to}<br>
+                                <small>${notif.ride_date}</small><br>
+                                <button class="accept-btn">Accept</button>
+                                <button class="reject-btn">Reject</button>
+                            `;
+
+                            item.querySelector(".accept-btn").addEventListener("click", () => {
+                                socket.emit("ride-response", {
+                                    requester: notif.requester_name,
+                                    status: "accepted",
+                                    date: notif.ride_date,
+                                });
+
+                                fetch("/mark-notifications-read", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        username: currentUsername,
+                                        requester: notif.requester_name,
+                                        date: notif.ride_date,
+                                        offererResponse: "accepted"
+                                    })
+                                });
+
+                                item.remove();
+                            });
+
+                            item.querySelector(".reject-btn").addEventListener("click", () => {
+                                socket.emit("ride-response", {
+                                    requester: notif.requester_name,
+                                    status: "rejected",
+                                    date: notif.ride_date,
+                                });
+
+                                fetch("/mark-notifications-read", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        username: currentUsername,
+                                        requester: notif.requester_name,
+                                        date: notif.ride_date,
+                                        offererResponse: "rejected"
+                                    })
+                                });
+
+                                item.remove();
+                            });
+                        }
+
+                        notifList.appendChild(item);
+                        hasUnread = true;
+                    });
+
+                    // Mark as read only if there were any unseen
+                    if (hasUnread) {
+                        fetch("/mark-notifications-read", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ username: currentUsername })
+                        }).then(() => {
+                            notifCount = 0;
+                            notifCountElem.style.display = "none";
+                        });
+                    }
+                })
+                .catch(err => console.error("Error fetching notifications:", err));
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!notifIcon.contains(e.target) && !notifDropdown.contains(e.target)) {
+            notifDropdown.classList.remove("active");
+        }
+    });
+
+    // Listen for incoming ride requests
+    socket.on("ride-requested", (data) => {
+        notifCount++;
+        notifCountElem.textContent = notifCount;
+        notifCountElem.style.display = "inline-block";
+
+        const notifItem = document.createElement("div");
+        notifItem.classList.add("notification-item");
+        notifItem.innerHTML = `
+            <strong>${data.requester}</strong> ➜ ${data.from} to ${data.to}<br>
+            <small>${data.date}</small><br>
+            <button class="accept-btn">Accept</button>
+            <button class="reject-btn">Reject</button>
+        `;
+
+        notifItem.querySelector(".accept-btn").addEventListener("click", () => {
+            socket.emit("ride-response", {
+                requester: data.requester,
+                status: "accepted",
+                date: data.date,
+            });
+
+            fetch("/mark-notifications-read", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    requester: data.requester,
+                    date: data.date,
+                    offererResponse: "accepted"
+                })
+            });
+
+            notifItem.remove();
+        });
+
+        notifItem.querySelector(".reject-btn").addEventListener("click", () => {
+            socket.emit("ride-response", {
+                requester: data.requester,
+                status: "rejected",
+                date: data.date,
+            });
+
+            fetch("/mark-notifications-read", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    requester: data.requester,
+                    date: data.date,
+                    offererResponse: "rejected"
+                })
+            });
+
+            notifItem.remove();
+        });
+
+        notifList.prepend(notifItem);
+    });
+
+    socket.on("ride-response", (data) => {
+        notifCount++;
+        notifCountElem.textContent = notifCount;
+        notifCountElem.style.display = "inline-block";
+
+        const notifItem = document.createElement("div");
+        notifItem.classList.add("notification-item");
+        notifItem.innerHTML = `
+            <strong>${data.offerer}</strong> ${data.status} your ride request<br>
+            ${data.from} ➜ ${data.to}<br>
+            <small>${data.date}</small>
+        `;
+        notifList.prepend(notifItem);
+    });
+
+    socket.on("disconnect", () => {
+        console.warn("Disconnected from server");
+    });
+});
+</script>
+</body>
+</html>

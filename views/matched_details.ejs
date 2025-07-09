@@ -1,0 +1,169 @@
+<%- include('./partials/dashboard-header.ejs'),{username:username} %>
+<link rel="stylesheet" href="/css/matched_details.css">
+<div class="matched-user-container">
+    <div class="matched-input-group-container">
+        <div class="matched-input-group">
+            <label>From*</label>
+            <input type="text" name="from" placeholder="<%= from %>" readonly required>
+        </div>
+        <div class="matched-input-group">
+            <label>To*</label>
+            <input type="text" name="to" placeholder="<%= to %>" readonly required>
+        </div>
+        <div class="matched-input-group">
+            <label>Date*</label>
+            <input type="text" name="date" placeholder="<%= date %>" readonly required>
+        </div>
+    </div>
+
+    <div class="matched-user-header">
+        <h2>Matched Users</h2>
+    </div>
+
+    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+      <div class="flash-overlay" id="page-flash-overlay" style="display:flex;justify-content:center;align-items:center;">
+        <div class="flash-message success">
+          <i class="fas fa-check-circle"></i>
+          <span><%= success_msg %></span>
+          <button class="message-close-btn" onclick="this.closest('.flash-overlay').style.display='none'">✕</button>
+        </div>
+      </div>
+      <script>
+        setTimeout(function() {
+          var overlay = document.getElementById('page-flash-overlay');
+          if (overlay) {
+            overlay.classList.add('fade-out');
+            setTimeout(function() {
+              overlay.style.display = 'none';
+            }, 700);
+          }
+        }, 5000);
+      </script>
+    <% } %>
+
+    <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+      <div class="flash-overlay" id="page-flash-overlay-error" style="display:flex;justify-content:center;align-items:center;">
+        <div class="flash-message error">
+          <i class="fas fa-exclamation-circle"></i>
+          <span><%= error_msg %></span>
+          <button class="message-close-btn" onclick="this.closest('.flash-overlay').style.display='none'">✕</button>
+        </div>
+      </div>
+      <script>
+        setTimeout(function() {
+          var overlay = document.getElementById('page-flash-overlay-error');
+          if (overlay) {
+            overlay.classList.add('fade-out');
+            setTimeout(function() {
+              overlay.style.display = 'none';
+            }, 700);
+          }
+        }, 5000);
+      </script>
+    <% } %>
+
+    <% if (matched_results.length === 0) { %>
+        <p style="color: red; font-weight: bold;">No matched users found.</p>
+    <% } %>
+
+    <% matched_results.forEach(user => { %>
+        <div class="matched-user-box">
+            <div class="matched-user-content">
+                <div class="matched-user-info">
+                    <p><strong>Name:</strong> <%= user.username %></p>
+                    <p><strong>Phone no:</strong> <%= user.mobile_number %></p>
+                    <p><strong>Vehicle:</strong> <%= user.vehicle_type %></p>
+                    <p><strong>Capacity:</strong> <%= user.capacity %></p>
+                    <p><strong>Start Time:</strong> <%= user.start_time %></p>
+                    <p><strong>End Time:</strong> <%= user.end_time %></p>
+
+                    <p><strong>Route:</strong></p>
+                    <div class="route-visual">
+                        <span class="route-point source"><%= user.from_loc %></span>
+
+                        <% if (user.intermediate_locations && user.intermediate_locations.length > 0) { %>
+                            <% user.intermediate_locations.forEach((loc) => { %>
+                                <span class="route-line">───</span>
+                                <span class="route-pin"> <%= loc %></span>
+                            <% }) %>
+                        <% } %>
+
+                        <span class="route-line">───➤</span>
+                        <span class="route-point destination"><%= user.to_loc %></span>
+                    </div>
+
+                    <p class="match-source"><strong>Matched by:</strong> 
+                        From: 
+                        <% if (user.from_loc === from) { %>
+                            <%= from %>
+                        <% } else if (user.intermediate_locations.includes(from)) { %>
+                            <%= from %>
+                        <% } else { %>
+                            N/A
+                        <% } %>
+                        |
+                        To: 
+                        <% if (user.to_loc === to) { %>
+                            <%= to %>
+                        <% } else if (user.intermediate_locations.includes(to)) { %>
+                            <%= to %>
+                        <% } else { %>
+                            N/A
+                        <% } %>
+                    </p>
+                </div>
+                <div class="matched-user-actions">
+                    <form action="/request-ride" method="POST" style="display:inline;">
+                        <input type="hidden" name="offerer_name" value="<%= user.username %>">
+                        <input type="hidden" name="requester_name" value="<%= username %>"> <!-- Assuming you pass current_user to EJS -->
+                        <input type="hidden" name="requester_from" value="<%= from %>">
+                        <input type="hidden" name="requester_to" value="<%= to %>">
+                        <input type="hidden" name="from_location" value="<%= user.from_loc %>">
+                        <input type="hidden" name="to_location" value="<%= user.to_loc %>">
+                        <input type="hidden" name="ride_date" value="<%= date %>">
+                        <button type="submit" class=" btn btn-primary request-ride-btn"
+                        data-offerer="<%= user.username %>"
+                        data-from="<%= user.from_loc %>"
+                        data-to="<%= user.to_loc %>"
+                        data-date="<%= date %>">Request ride</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <% }) %>
+    <div class="extra"></div>
+</div>
+
+<script>
+  const requesterSocket = io();
+
+  const requesterName = "<%= username %>"; // Assuming user.username is available from session
+
+  // Register this requester with the server
+  requesterSocket.emit("register", requesterName);
+
+  document.querySelectorAll(".request-ride-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const offererName = btn.dataset.offerer;
+      const from = btn.dataset.from;
+      const to = btn.dataset.to;
+      const date = btn.dataset.date;
+
+      requesterSocket.emit("send-ride-request", {
+        offerer_name: offererName,
+        requester_name: requesterName,
+        requester_from: from,
+        requester_to: to,
+        ride_date: date,
+      });
+
+      // Optional confirmation toast
+      Toastify({
+        text: `Ride request sent to ${offererName}`,
+        duration: 30000,
+        backgroundColor: "#2196F3"
+      }).showToast();
+    });
+  });
+</script>
+<%- include('./partials/dashboard-footer.ejs') %>

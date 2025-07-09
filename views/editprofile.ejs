@@ -1,0 +1,29 @@
+<%- include("./partials/dashboard-header.ejs") %>
+<div class="edit-profile-wrapper">
+  <div class="edit-profile-card">
+    <h1>Edit Your Profile</h1>
+    <form action="/editprofile" method="POST" class="edit-profile-form">
+      <div class="form-group">
+         <label for="name">Name</label>
+         <input type="text" id="name" name="name" value="<%= default_name %>" readonly/>
+      </div>
+
+      <div class="form-group">
+         <label for="email">Email</label>
+         <input type="email" id="email" name="editprofile-email" class="password-input" value="<%= default_email %>" readonly/>
+      </div>
+
+      <div class="form-group">
+        <label for="password">New Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="Enter new password (optional)"
+        />
+      </div>
+
+      <button type="submit" class="edit-submit-btn">Update Password</button>
+    </form>
+  </div>
+</div>

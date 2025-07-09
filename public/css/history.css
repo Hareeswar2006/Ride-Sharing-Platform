@@ -1,0 +1,288 @@
+/* Add to your existing CSS or create new offers-requests.css */
+
+/* ====== BASE STYLES ====== */
+:root {
+  --primary: #6c5ce7;
+  --primary-light: #a29bfe;
+  --secondary: #00cec9;
+  --dark: #2d3436;
+  --light: #f5f6fa;
+  --gray: #dfe6e9;
+  --success: #00b894;
+  --warning: #fdcb6e;
+  --danger: #d63031;
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+[data-theme="dark"] {
+  --primary: #a29bfe;
+  --primary-light: #6c5ce7;
+  --secondary: #00cec9;
+  --dark: #f5f6fa;
+  --light: #2d3436;
+  --gray: #636e72;
+  --text-primary: #f5f6fa;
+  --text-secondary: #dfe6e9;
+}
+
+/* ====== TABS ====== */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--gray);
+  margin: 0 2rem 2rem;
+  padding: 0 0.5rem;
+}
+
+.tab {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: var(--transition);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab i {
+  font-size: 1.1rem;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab:hover:not(.active) {
+  color: var(--primary-light);
+}
+
+/* ====== MAIN CONTAINER ====== */
+.history-container {
+  padding: 0 2rem 2rem;
+}
+
+.sections {
+  background: rgba(229, 224, 247, 0.063);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.section {
+  display: none;
+  padding: 1.5rem;
+}
+
+.section.active {
+  display: block;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: var(--secondary);
+}
+
+/* ====== CARD STYLES ====== */
+.offer-card, 
+.request-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .offer-card,
+[data-theme="dark"] .request-card {
+  background: var(--dark);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.offer-card:hover::before,
+.request-card:hover::before {
+  width: 8px;
+}
+.offer-card:hover, 
+.request-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.history-card-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-card-header::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 0.5rem;
+  min-width: 60px;
+  display: inline-block;
+}
+
+/* ====== CHILD DETAILS ====== */
+.child-details {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--gray);
+}
+
+.child {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.child::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary-light);
+  font-weight: bold;
+}
+
+.child:last-child {
+  margin-bottom: 0;
+}
+
+/* ====== STATUS LABELS ====== */
+.status-label {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.status-label.accepted {
+  background-color: rgba(0, 184, 148, 0.2);
+  color: var(--success);
+}
+
+.status-label.pending {
+  background-color: rgba(253, 203, 110, 0.2);
+  color: #e17055;
+}
+
+.status-label.rejected {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: var(--danger);
+}
+
+/* ====== EMPTY STATES ====== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  color: var(--primary-light);
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.error-message {
+  color: var(--danger);
+  background: rgba(220, 53, 69, 0.1);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+/* ====== RESPONSIVE ADJUSTMENTS ====== */
+@media (max-width: 768px) {
+  .tabs {
+      margin: 0 1rem 1.5rem;
+      padding: 0;
+  }
+  
+  .tab {
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      flex: 1;
+      justify-content: center;
+  }
+  
+  .history-container {
+      padding: 0 1rem 1rem;
+  }
+  
+  .section {
+      padding: 1rem;
+  }
+  
+  .history-card-header {
+      font-size: 1rem;
+  }
+  
+  .label {
+      min-width: 50px;
+      display: block;
+      margin-bottom: 0.25rem;
+  }
+}
+
+/* ====== ANIMATIONS ====== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.offer-card, 
+.request-card {
+  animation: fadeIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.offer-card:nth-child(1) { animation-delay: 0.1s; }
+.offer-card:nth-child(2) { animation-delay: 0.2s; }
+.offer-card:nth-child(3) { animation-delay: 0.3s; }
+.request-card:nth-child(1) { animation-delay: 0.1s; }
+.request-card:nth-child(2) { animation-delay: 0.2s; }
+.request-card:nth-child(3) { animation-delay: 0.3s; }

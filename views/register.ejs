@@ -1,0 +1,45 @@
+<%- include('./partials/header.ejs') %>
+<link rel="stylesheet" href="/css/register.css">
+    <div class="register-container">
+        <div class="register-box">
+            <% if(locals.Message){ %>
+                <div class="message"><%= Message %></div>
+                <% } %>
+            <h2>Complete Your Profile</h2>
+            <form class="register-form" action="/register" method="post" enctype="multipart/form-data">
+                
+                <!-- Image Upload Section -->
+                <div class="image-upload-container">
+                    <label for="imageUpload" class="image-upload-label">
+                        <img id="previewImage" src="/resources/p.jpg" alt="Profile Image">
+                        <div class="camera-icon">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                    </label>
+                    <input type="file" id="imageUpload" name="profileImage" accept="image/*">
+                </div>
+
+                <!-- Username Input -->
+                <div class="register-input-group">
+                    <label>User Name*</label>
+                    <input type="text" name="uname" placeholder="Enter your name" required>
+                </div>
+
+                <!-- Mobile Number Input -->
+                <div class="register-input-group">
+                    <label>Mobile Number*</label>
+                    <input type="tel" name="phoneno" placeholder="Enter your mobile number" required>
+                </div>
+
+                <!-- Default Email -->
+                <div class="register-input-group default-email-input">
+                    <label>Email</label>
+                    <input type="email" name="email" value="<%= Email_default %>" readonly>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="register-btn">Save</button>
+            </form>
+        </div>
+    </div>
+<%- include('./partials/footer.ejs') %>

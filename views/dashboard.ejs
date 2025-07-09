@@ -1,0 +1,262 @@
+<%- include("./partials/dashboard-header.ejs") %>
+<% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+  <div class="flash-overlay" id="page-flash-overlay" style="display:flex;justify-content:center;align-items:center;">
+    <div class="flash-message success">
+      <i class="fas fa-check-circle"></i>
+      <span><%= success_msg %></span>
+      <button class="message-close-btn" onclick="this.closest('.flash-overlay').style.display='none'">✕</button>
+    </div>
+  </div>
+  <script>
+    setTimeout(function() {
+      var overlay = document.getElementById('page-flash-overlay');
+      if (overlay) {
+        overlay.classList.add('fade-out');
+        setTimeout(function() {
+          overlay.style.display = 'none';
+        }, 700);
+      }
+    }, 5000);
+  </script>
+<% } %>
+<div class="dashboard-container">
+<div class="dashboard-card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Plan Your Journey</h2>
+            <p class="card-subtitle">Find the perfect ride or share your journey with others. Seamless travel experiences await.</p>
+        </div>
+    </div>
+    
+    <div class="form-container">
+        <form action="/dashboard" method="post" id="rideForm">
+            <input type="hidden" name="mode" id="modeInput" value="find">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-map-marker-alt"></i> From*</label>
+                    <input type="text" id="fromInput" name="from" placeholder="Enter departure city" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-flag-checkered"></i> To*</label>
+                    <input type="text" id="toInput" name="to" placeholder="Enter destination city" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-calendar-day"></i> Date*</label>
+                    <input type="date" name="date" class="input-field" required>
+                </div>
+            </div>
+
+            <!-- Offer a Ride Additional Fields -->
+            <div id="offerRideFields" style="display: none;">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label class="input-label"><i class="fas fa-clock"></i> Start Time*</label>
+                        <input type="time" name="start_time" class="input-field" required disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fas fa-hourglass-end"></i> End Time*</label>
+                        <input type="time" name="end_time" class="input-field" required disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fas fa-car"></i> Vehicle Type*</label>
+                        <input type="text" name="vehicle_type" placeholder="Car model or type" class="input-field" required disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fas fa-users"></i> Capacity*</label>
+                        <input type="number" name="capacity" placeholder="Number of seats" class="input-field" min="1" required disabled>
+                    </div>
+                </div>
+
+                <!-- Intermediate Locations -->
+                <div class="intermediate-locations">
+                    <div class="intermediate-header">
+                        <h3 class="intermediate-title"><i class="fas fa-map-pin"></i> Intermediate Stops</h3>
+                        <button type="button" class="add-btn" onclick="addIntermediateLocation()">
+                            <i class="fas fa-plus"></i> Add Stop
+                        </button>
+                    </div>
+                    
+                    <div id="intermediate-locations-wrapper">
+                        <!-- No default intermediate-item here; will be added dynamically by addIntermediateLocation() -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="toggleOfferRideForm()" id="toggleOfferRide">
+                    <i class="fas fa-car-side"></i> Offer a Ride
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-search"></i> Find a Ride
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Floating Background Elements -->
+<div class="floating-elements">
+    <div class="floating-element element-1"></div>
+    <div class="floating-element element-2"></div>
+</div>
+
+<script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Check for saved theme preference or use OS preference
+    
+    // Mobile sidebar toggle
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+    
+    // Form functionality
+    function toggleOfferRideForm() {
+        const offerRideFields = document.getElementById('offerRideFields');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleBtn = document.getElementById('toggleOfferRide');
+        const modeInput = document.getElementById('modeInput');
+        // Enable/disable offer fields
+        offerRideFields.querySelectorAll('input').forEach(input => {
+            input.disabled = !input.disabled;
+        });
+        if (offerRideFields.style.display === 'none' || offerRideFields.style.display === '') {
+            toggleBtn.innerHTML = `<i class="fas fa-arrow-left"></i> Back`;
+            offerRideFields.style.display = 'block';
+            submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Submit Offer`;
+            modeInput.value = 'offer';
+        } else {
+            toggleBtn.innerHTML = `<i class="fas fa-car-side"></i> Offer a Ride`;
+            offerRideFields.style.display = 'none';
+            submitBtn.innerHTML = `<i class="fas fa-search"></i> Find a Ride`;
+            modeInput.value = 'find';
+        }
+    }
+    
+    function addIntermediateLocation() {
+        const wrapper = document.getElementById('intermediate-locations-wrapper');
+        const newItem = document.createElement('div');
+        newItem.className = 'intermediate-item';
+        newItem.innerHTML = `
+            <input type="text" name="intermediate_location[]" class="input-field intermediateInput" placeholder="Add a stop between locations">
+            <button type="button" class="remove-btn" onclick="removeIntermediateLocation(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        wrapper.appendChild(newItem);
+        initAutocomplete();
+    }
+    
+    function removeIntermediateLocation(button) {
+        const item = button.closest('.intermediate-item');
+        if (item) {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+                item.remove();
+            }, 300);
+        }
+    }
+    
+    // Google Maps Autocomplete
+    function initAutocomplete() {
+        const options = {
+            componentRestrictions: { country: 'in' }
+        };
+        
+        document.querySelectorAll('.input-field').forEach(input => {
+            if (input.id === 'fromInput' || input.id === 'toInput' || input.classList.contains('intermediateInput')) {
+                new google.maps.places.Autocomplete(input, options);
+            }
+        });
+    }
+    
+    // Flash message close
+    document.querySelectorAll('.message-close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const flashOverlay = this.closest('.flash-overlay');
+            flashOverlay.style.opacity = '0';
+            setTimeout(() => {
+                flashOverlay.remove();
+            }, 300);
+        });
+    });
+    
+    // Initialize autocomplete on page load
+    window.addEventListener('DOMContentLoaded', initAutocomplete);
+    
+    // Create floating particles
+    function createParticles() {
+        const particlesContainer = document.createElement('div');
+        particlesContainer.className = 'particles';
+        document.body.appendChild(particlesContainer);
+        
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.style.position = 'absolute';
+            particle.style.width = Math.random() * 8 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.background = 'var(--accent-primary)';
+            particle.style.borderRadius = '50%';
+            particle.style.opacity = Math.random() * 0.5 + 0.1;
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animation = `floatParticle ${Math.random() * 20 + 10}s linear infinite`;
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            particlesContainer.appendChild(particle);
+            
+            // Add keyframes dynamically
+            const styleSheet = document.styleSheets[0];
+            styleSheet.insertRule(`
+                @keyframes floatParticle {
+                    0% {
+                        transform: translate(0, 0);
+                    }
+                    100% {
+                        transform: translate(${Math.random() * 200 - 100}vw, ${Math.random() * 200 - 100}vh);
+                    }
+                }
+            `, styleSheet.cssRules.length);
+        }
+    }
+    
+    // Initialize particles
+    createParticles();
+    
+    // Set current date as default
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    document.querySelector('input[type="date"]').value = formattedDate;
+
+    // Robust validation before submit
+    const rideForm = document.getElementById('rideForm');
+    rideForm.addEventListener('submit', function(e) {
+        const mode = document.getElementById('modeInput').value;
+        if (mode === 'offer') {
+            const offerFields = document.querySelectorAll('#offerRideFields input[required]');
+            for (let field of offerFields) {
+                if (field.disabled || !field.value) {
+                    field.focus();
+                    alert('Please fill all required offer fields.');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
